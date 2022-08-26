@@ -6,7 +6,8 @@ class Lox:
         self.had_error = False
 
     def run_file(self, file):
-        self.run(file)
+        f = open(file)
+        self.run(f.read())
         if (self.had_error):
             sys.exit(65)
     def run_prompt(self):

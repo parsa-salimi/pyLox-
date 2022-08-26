@@ -1,6 +1,8 @@
+
+
 class Token:
-    def __init__(self, type, lexeme, literal, line):
-        self.type = type
+    def __init__(self, tokenType, lexeme, literal, line):
+        self.type = tokenType
         self.lexeme = lexeme
         self.literal = literal
         sel.line = line
