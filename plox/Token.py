@@ -5,7 +5,7 @@ class Token:
         self.type = tokenType
         self.lexeme = lexeme
         self.literal = literal
-        sel.line = line
+        self.line = line
 
-    def __string__(self):
-        return self.type + " " + self.lexeme + " " + self.literal
+    def __str__(self):
+        return str(self.type) + " " + str(self.lexeme) + " " + str(self.literal)
