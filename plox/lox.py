@@ -1,4 +1,7 @@
 from Scanner import Scanner
+from Parser import Parser
+from astPrinter import AstPrinter
+from TokenType import TokenType
 import sys
 
 
@@ -11,6 +14,11 @@ class ErrorHandler:
     def report(self,line,where, message):
         print("[line" + str(line) + "] Error" + where + ": " + message)
         self.had_error = True
+
+    def error(self, token, message):
+        if (token.type == TokenType.EOF):
+            self.report(token.line, "at end", message)
+        else : self.report(token.line, " at '" + token.lexeme + "'", message)
 
 
 class Lox:
@@ -31,10 +39,17 @@ class Lox:
             self.ErrorHandler.had_error = False
 
     def run(self, prompt):
-        s = Scanner(prompt, self.ErrorHandler)
-        tokens = s.scanTokens()
+        scanner = Scanner(prompt, self.ErrorHandler)
+        tokens = scanner.scanTokens()
         for token in tokens:
             print(str(token))
+        parser = Parser(tokens, self.ErrorHandler)
+        expression = parser.parse()
+        if self.ErrorHandler.had_error : return
+        print(AstPrinter().print(expression))
+
+
+
 
 
 
