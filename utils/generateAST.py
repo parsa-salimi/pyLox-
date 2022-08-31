@@ -15,7 +15,7 @@ def defineAst(outputDir, baseName, types):
     f = open(root / path , "a")
     defineVisitor(f, baseName, types)
     f.write("class " + baseName + ":\n")
-    f.write("\tdef accpet(visitor):\n")
+    f.write("\tdef accept(visitor):\n")
     f.write("\t\tpass\n")
     for t in types:
         className = t.split(":")[0].strip()
@@ -23,7 +23,7 @@ def defineAst(outputDir, baseName, types):
         defineType(f, baseName, className, fields)
 
 def defineVisitor(f, baseName, types):
-    f.write("Class Visitor:\n")
+    f.write("class Visitor:\n")
     for t in types:
         typeName = t.split(":")[0].strip()
         f.write("\tdef visit"+ typeName + baseName + "(" + baseName.lower() + "):\n")
@@ -38,8 +38,8 @@ def defineType(f, baseName, className, fieldList):
         #name = field.split(" ")[1]
         name = field
         f.write("\t\t" "self." + name + "= " + name + "\n")
-    f.write("\tdef accept(visitor):\n")
-    f.write("\t\treturn visitor.visit" + className + baseName + "()\n")
+    f.write("\tdef accept(self, visitor):\n")
+    f.write("\t\treturn visitor.visit" + className + baseName + "(self)\n")
 
 main()
 
