@@ -20,7 +20,6 @@ class Parser:
 
     def equality(self):
         expr = self.comparison()
-        print(expr)
         while(self.match([TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL])):
             operator = self.previous()
             right = self.comparison()
@@ -29,7 +28,6 @@ class Parser:
     
     def comparison(self):
         expr = self.term()
-        print(expr)
         while(self.match([TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL])):
             operator = self.previous()
             right = self.term()
@@ -38,7 +36,6 @@ class Parser:
 
     def term(self):
         expr = self.factor()
-        print(expr)
         while(self.match([TokenType.MINUS, TokenType.PLUS])):
             operator = self.previous()
             right = self.factor()
@@ -48,7 +45,6 @@ class Parser:
 
     def factor(self):
         expr = self.unary()
-        print(expr)
         while(self.match([TokenType.SLASH, TokenType.STAR])):
             operator = self.previous()
             right = self.unary()
