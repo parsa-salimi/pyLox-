@@ -1,13 +1,19 @@
 import sys
 from pathlib import Path
 
-def main():
+def mainExpr():
     outputDir = sys.argv[1]
     grammar = [     "Binary   :  left, operator, right",
                     "Grouping : expression",
                     "Literal  : value",
                     "Unary    :  operator, right" ]
     defineAst(outputDir, "Expr", grammar)
+
+def mainStmt():
+    outputDir = sys.argv[1]
+    grammar = [ "Expression : expression",
+                "Print      : expression"]
+    defineAst(outputDir, "Stmt", grammar)
 
 def defineAst(outputDir, baseName, types):
     root = Path(outputDir)
@@ -41,7 +47,7 @@ def defineType(f, baseName, className, fieldList):
     f.write("\tdef accept(self, visitor):\n")
     f.write("\t\treturn visitor.visit" + className + baseName + "(self)\n")
 
-main()
+mainStmt()
 
 
 
