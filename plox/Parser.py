@@ -1,5 +1,6 @@
 from TokenType import TokenType
 import Expr
+import Stmt
 
 class ParseError(Exception):
     pass
@@ -8,13 +9,28 @@ class Parser:
     def __init__(self, tokens, error_handler):
         self.tokens = tokens
         self.current = 0
+        self.statements = []
         self.error_handler = error_handler
 
     def parse(self):
-        try:
-           return self.expression()
-        except ParseError:
-            return None 
+        while(not (self.isAtEnd())):
+            self.statements.append(self.statement())
+        return self.statements
+
+    def statement(self):
+        if(self.match([TokenType.PRINT])):
+            return self.printStatement()
+        else return self.expressionStatement()
+
+    def printStatement(self):
+        value=self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ; after value")
+        return Stmt.Print(value)
+
+    def expressionStatement(self):
+        value=self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ; after expression")
+        return Stmt.Expression(value)
 
     def expression(self): return self.equality()
 
@@ -25,7 +41,7 @@ class Parser:
             right = self.comparison()
             expr = Expr.Binary(expr, operator, right)
         return expr
-    
+
     def comparison(self):
         expr = self.term()
         while(self.match([TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL])):
@@ -75,7 +91,7 @@ class Parser:
 
     def error(self, token, message):
         self.error_handler.error(token, message)
-        return ParseError() 
+        return ParseError()
 
     def synchronize(self):
         self.advance()
@@ -99,7 +115,7 @@ class Parser:
     def check(self,t):
         if (self.isAtEnd()) : return False
         return (self.peek().type == t)
-    
+
     def advance(self):
         if (not (self.isAtEnd())) : self.current += 1
         return self.previous()
@@ -109,13 +125,3 @@ class Parser:
     def peek(self): return self.tokens[self.current]
 
     def previous(self): return self.tokens[self.current - 1]
-    
-
-
-    
-
-    
-
-
-
-
