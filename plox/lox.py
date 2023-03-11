@@ -19,7 +19,7 @@ class ErrorHandler:
 
     def error(self, token, message):
         if (token.type == TokenType.EOF):
-            self.report(token.line, "at end", message)
+            self.report(token.line, " at end", message)
         else : self.report(token.line, " at '" + token.lexeme + "'", message)
 
     def runtimeError(self, err):
@@ -28,7 +28,7 @@ class ErrorHandler:
 
 
 class Lox:
-    
+
     #def __init__(self):
     #    self.ErrorHandler = ErrorHandler()
 
@@ -53,9 +53,9 @@ class Lox:
         scanner = Scanner(prompt, self.ErrorHandler)
         tokens = scanner.scanTokens()
         parser = Parser(tokens, self.ErrorHandler)
-        expression = parser.parse()
+        statements = parser.parse()
         if self.ErrorHandler.had_error : return
-        self.interpreter.interpret(expression)
+        self.interpreter.interpret(statements)
 
 
 

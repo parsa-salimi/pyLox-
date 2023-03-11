@@ -1,4 +1,5 @@
 import Expr
+import Stmt
 from TokenType import TokenType
 
 class LoxTypeError(Exception):
@@ -6,23 +7,33 @@ class LoxTypeError(Exception):
         self.token = token
         super().__init__(message)
 
-class Interpreter(Expr.Visitor):
+class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self, ErrorHandler):
         self.error_handler = ErrorHandler
-    def interpret(self,expression):
+    def interpret(self,listStmts):
         try:
-            value = self.evaluate(expression)
-            print(self.stringify(value))
+            for statement in listStmts:
+                self.execute(statement)
         except LoxTypeError as err:
             return self.error_handler.runtimeError(err)
 
+    """Statements"""
+    def visitExpressionStmt(self, stmt):
+        self.evaluate(stmt.expression)
+        return None
 
+    def visitPrintStmt(self, stmt):
+        value = self.evaluate(stmt.expression)
+        print(self.stringify(value))
+        return None
+
+    """ Expressions """
     def visitLiteralExpr(self, expr): return expr.value
     def visitGroupingExpr(self, expr) : return self.evaluate(expr.expression)
     def visitUnaryExpr(self, expr):
         right = self.evaluate(expr.right)
         if (expr.operator.type == TokenType.MINUS):
-            self.checkNumberOperand(expr.operator, right)  
+            self.checkNumberOperand(expr.operator, right)
             return -right
         elif (expr.operator.type == TokenType.BANG): return (not self.isTruthy(right))
         return None
@@ -47,15 +58,15 @@ class Interpreter(Expr.Visitor):
         if(expr.operator.type == TokenType.MINUS):
             self.checkNumberOperands(expr.operator, left, right)
             return left - right
-        elif(expr.operator.type == TokenType.SLASH): 
+        elif(expr.operator.type == TokenType.SLASH):
             self.checkNumberOperands(expr.operator, left, right)
             if (right == 0):
                 raise LoxTypeError(expr.operator, "division by zero")
             return left / right
-        elif(expr.operator.type == TokenType.STAR): 
+        elif(expr.operator.type == TokenType.STAR):
             self.checkNumberOperands(expr.operator, left, right)
             return left * right
-        elif(expr.operator.type == TokenType.PLUS) : 
+        elif(expr.operator.type == TokenType.PLUS) :
             if (isinstance(left, str) and isinstance(right,str)):
                 return left + right
             if (isinstance(left, float) and isinstance(right, float)):
@@ -66,22 +77,25 @@ class Interpreter(Expr.Visitor):
                 return self.stringify(left) + right
             return left + right
             raise LoxTypeError(operator, "operands must be numbers or strings")
-        elif(expr.operator.type == TokenType.GREATER) : 
+        elif(expr.operator.type == TokenType.GREATER) :
             self.checkNumberOperands(expr.operator, left, right)
             return left > right
-        elif(expr.operator.type == TokenType.GREATER_EQUAL) : 
+        elif(expr.operator.type == TokenType.GREATER_EQUAL) :
             self.checkNumberOperands(expr.operator, left, right)
             return left >= right
         elif(expr.operator.type == TokenType.LESS) :
             self.checkNumberOperands(expr.operator, left, right)
             return left < right
-        elif(expr.operator.type == TokenType.LESS_EQUAL) : 
+        elif(expr.operator.type == TokenType.LESS_EQUAL) :
             self.checkNumberOperands(expr.operator, left, right)
             return left <= right
         elif(expr.operator.type == TokenType.BANG_EQUAL) : return left != right
         elif(expr.operator.type == TokenType.EQUAL_EQUAL) : return left == right
 
-        
+
+
+    """ Helpers"""
+    def execute(self, stmt): return stmt.accept(self)
 
     def evaluate(self, expr): return expr.accept(self)
 

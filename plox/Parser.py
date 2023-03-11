@@ -14,13 +14,30 @@ class Parser:
 
     def parse(self):
         while(not (self.isAtEnd())):
-            self.statements.append(self.statement())
+            self.statements.append(self.declaration())
         return self.statements
+
+    def declaration(self):
+        try:
+            if(self.match([TokenType.VAR])):
+                return self.varDeclaration()
+            else: return self.statement()
+        except ParseError:
+            self.synchronize()
+            return None
+
+    def varDeclaration(self):
+        name = self.consume(TokenType.IDENTIFIER, "Expect variable name")
+        value = None
+        if(self.match([TokenType.EQUAL])):
+            value = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ; after initialization expression")
+        return Stmt.Var(name, value)
 
     def statement(self):
         if(self.match([TokenType.PRINT])):
             return self.printStatement()
-        else return self.expressionStatement()
+        else: return self.expressionStatement()
 
     def printStatement(self):
         value=self.expression()
@@ -79,6 +96,7 @@ class Parser:
         if self.match([TokenType.TRUE]) : return Expr.Literal(True)
         if self.match([TokenType.NIL]) : return Expr.Literal(None)
         if self.match([TokenType.NUMBER, TokenType.STRING]): return Expr.Literal(self.previous().literal)
+        if self.match([TokenType.IDENTIFIER]): return Expr.Variable(self.previous())
         if self.match([TokenType.LEFT_PAREN]):
             expr = self.expression()
             self.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")

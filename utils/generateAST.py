@@ -6,13 +6,15 @@ def mainExpr():
     grammar = [     "Binary   :  left, operator, right",
                     "Grouping : expression",
                     "Literal  : value",
-                    "Unary    :  operator, right" ]
+                    "Unary    :  operator, right",
+                    "Variable : name" ]
     defineAst(outputDir, "Expr", grammar)
 
 def mainStmt():
     outputDir = sys.argv[1]
     grammar = [ "Expression : expression",
-                "Print      : expression"]
+                "Print      : expression",
+                "Var        : name, initializer"]
     defineAst(outputDir, "Stmt", grammar)
 
 def defineAst(outputDir, baseName, types):
@@ -48,6 +50,4 @@ def defineType(f, baseName, className, fieldList):
     f.write("\t\treturn visitor.visit" + className + baseName + "(self)\n")
 
 mainStmt()
-
-
-
+mainExpr()
