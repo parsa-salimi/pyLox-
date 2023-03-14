@@ -1,16 +1,18 @@
 from TokenType import TokenType
 import Expr
 import Stmt
+import ErrorHandler
+from ErrorHandler import LoxRuntimeError, ErrorHandler
 
 class ParseError(Exception):
     pass
 
 class Parser:
-    def __init__(self, tokens, error_handler):
+    def __init__(self, tokens):
         self.tokens = tokens
         self.current = 0
         self.statements = []
-        self.error_handler = error_handler
+        #self.error_handler = error_handler
 
     def parse(self):
         while(not (self.isAtEnd())):
@@ -108,7 +110,7 @@ class Parser:
         raise self.error(self.peek(), message)
 
     def error(self, token, message):
-        self.error_handler.error(token, message)
+        ErrorHandler.TokenError(token, message)
         return ParseError()
 
     def synchronize(self):

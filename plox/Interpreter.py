@@ -1,6 +1,9 @@
 import Expr
 import Stmt
 from TokenType import TokenType
+import ErrorHandler
+from ErrorHandler import LoxRuntimeError, ErrorHandler
+from Environment import Environment
 
 class LoxTypeError(Exception):
     def __init__(self, token, message):
@@ -8,14 +11,15 @@ class LoxTypeError(Exception):
         super().__init__(message)
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
-    def __init__(self, ErrorHandler):
-        self.error_handler = ErrorHandler
+    def __init__(self):
+        self.env = Environment()
+
     def interpret(self,listStmts):
         try:
             for statement in listStmts:
                 self.execute(statement)
-        except LoxTypeError as err:
-            return self.error_handler.runtimeError(err)
+        except LoxRuntimeError as err:
+            return ErrorHandler.runtimeError(err)
 
     """Statements"""
     def visitExpressionStmt(self, stmt):
@@ -27,7 +31,15 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         print(self.stringify(value))
         return None
 
+    def visitVarStmt(self, stmt):
+        value = None
+        if stmt.initializer != None:
+            value = self.evaluate(stmt.initializer)
+        self.env.define(stmt.name.lexeme, value)
+        return None
+
     """ Expressions """
+    def visitVariableExpr(self, expr): return self.env.get(expr.name)
     def visitLiteralExpr(self, expr): return expr.value
     def visitGroupingExpr(self, expr) : return self.evaluate(expr.expression)
     def visitUnaryExpr(self, expr):
@@ -40,11 +52,11 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     def checkNumberOperand(self, operator, operand):
         if isinstance(operator, float) : return
-        raise LoxTypeError(operator, "Operand must be a number")
+        raise LoxRuntimeError(operator, "Operand must be a number")
 
     def checkNumberOperands(self, operator, left, right):
         if (isinstance(left, float) and isinstance(right,float)): return
-        raise LoxTypeError(operator, "Operands must be numbers")
+        raise LoxRuntimeError(operator, "Operands must be numbers")
 
     def isTruthy(self, object):
         if (object == None) : return False
@@ -61,7 +73,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         elif(expr.operator.type == TokenType.SLASH):
             self.checkNumberOperands(expr.operator, left, right)
             if (right == 0):
-                raise LoxTypeError(expr.operator, "division by zero")
+                raise LoxRuntimeError(expr.operator, "division by zero")
             return left / right
         elif(expr.operator.type == TokenType.STAR):
             self.checkNumberOperands(expr.operator, left, right)
@@ -76,7 +88,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             if (isinstance(right,str)):
                 return self.stringify(left) + right
             return left + right
-            raise LoxTypeError(operator, "operands must be numbers or strings")
+            raise LoxRuntimeError(operator, "operands must be numbers or strings")
         elif(expr.operator.type == TokenType.GREATER) :
             self.checkNumberOperands(expr.operator, left, right)
             return left > right

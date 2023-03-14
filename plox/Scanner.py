@@ -1,10 +1,12 @@
 from TokenType import TokenType
 from Token import Token
+import ErrorHandler
+from ErrorHandler import LoxRuntimeError, ErrorHandler
 
 class Scanner:
-    def __init__(self, source, error_handler):
-        self.source = source 
-        self.error_handler = error_handler
+    def __init__(self, source):
+        self.source = source
+        #self.error_handler = error_handler
         self.start = 0
         self.current = 0
         self.line = 1
@@ -67,7 +69,7 @@ class Scanner:
         elif (c == '"'): self.string()
         elif (c.isdigit()): self.number()
         elif (c.isalpha() or c=='_'): self.identifier()
-        else: self.error_handler.error(self.line, "Unexpected character")
+        else: ErrorHandler.error(self.line, "Unexpected character")
 
     def isAtEnd(self):
         return (self.current >= len(self.source))
@@ -81,10 +83,10 @@ class Scanner:
         if (self.source[self.current] != expected) : return False
         self.current += 1
         return True
-    
+
     def addToken(self, tokenType):
         self.addTokenl(tokenType, None)
-    
+
     def addTokenl(self, tokenType, literal):
         text = self.source[self.start : self.current]
         self.tokens.append(Token(tokenType, text, literal, self.line))
@@ -101,8 +103,8 @@ class Scanner:
         while (self.peek() != '"' and (not self.isAtEnd())):
             if (self.peek() == '\n') : line += 1
             self.advance()
-        if (self.isAtEnd()) : 
-            self.error_handler.error(line, "undetermined string.")
+        if (self.isAtEnd()) :
+            ErrorHandler.error(line, "undetermined string.")
             return
         self.advance()
         value = self.source[self.start+1 : self.current - 1]
@@ -119,10 +121,3 @@ class Scanner:
         text = self.source[self.start:self.current]
         identifierType = self.keywords.get(text, TokenType.IDENTIFIER)
         self.addToken(identifierType)
-
-
-
-
-
-
-

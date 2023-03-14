@@ -1,13 +1,12 @@
 
-from lox import ErrorHandler
+from ErrorHandler import ErrorHandler, LoxRuntimeError
 
 class Environment():
-    def __init__(self, error_handler):
+    def __init__(self):
         self.values = {}
-        self.error_handler = error_handler
     def define(self, name, value):
         self.values[name] = value
     def get(self, name):
         if name.lexeme in self.values:
             return self.values[name.lexeme]
-        else return ErrorHandler.runtimeError(name)
+        else: raise LoxRuntimeError(name, "Error, undefined variable " + name.lexeme + ".")
