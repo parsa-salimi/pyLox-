@@ -1,5 +1,5 @@
 from Scanner import Scanner
-from Parser import Parser
+from Parser import Parser, ParseError
 from astPrinter import AstPrinter
 from TokenType import TokenType
 from Interpreter import Interpreter
@@ -30,15 +30,31 @@ class Lox:
             prompt = input('>> ')
             if not prompt:
                 break
+
             self.run(prompt)
-            ErrorHandler.set_error_field(False)
+            if ErrorHandler.had_error:
+                ErrorHandler.set_error_field(False)
+
+            #ErrorHandler.set_error_field(False)
+
+    def runExpr(self,prompt):
+        scanner = Scanner(prompt)
+        tokens = scanner.scanTokens()
+        parser = Parser(tokens)
+        ast = parser.expression()
+        if ErrorHandler.had_error :
+            return
+        value = self.interpreter.evaluate(ast)
+        print(self.interpreter.stringify(value))
+        return
 
     def run(self, prompt):
         scanner = Scanner(prompt)
         tokens = scanner.scanTokens()
         parser = Parser(tokens)
         statements = parser.parse()
-        if ErrorHandler.had_error : return
+        if ErrorHandler.had_error :
+            return
         self.interpreter.interpret(statements)
 
 

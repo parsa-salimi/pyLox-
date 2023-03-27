@@ -4,15 +4,25 @@ from TokenType import TokenType
 import ErrorHandler
 from ErrorHandler import LoxRuntimeError, ErrorHandler
 from Environment import Environment
+import LoxCallable
+from LoxCallable import LoxCallable
+import NativeFunctions
+from NativeFunctions import stringify
+from LoxFunction import LoxFunction
 
 class LoxTypeError(Exception):
     def __init__(self, token, message):
         self.token = token
         super().__init__(message)
 
+
+
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self):
-        self.env = Environment()
+        self.globalEnv = Environment()
+        self.env = self.globalEnv
+        for function, impl in NativeFunctions.NativeFunctionsList.items():
+            self.globalEnv.define(function, impl())
 
     def interpret(self,listStmts):
         try:
@@ -26,10 +36,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self.evaluate(stmt.expression)
         return None
 
-    def visitPrintStmt(self, stmt):
-        value = self.evaluate(stmt.expression)
-        print(self.stringify(value))
-        return None
 
     def visitVarStmt(self, stmt):
         value = None
@@ -38,7 +44,56 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self.env.define(stmt.name.lexeme, value)
         return None
 
+    def visitBlockStmt(self, stmt):
+        self.executeBlock(stmt.statements, Environment(self.env))
+        return None
+
+    def visitIfStmt(self, stmt):
+
+        if(self.isTruthy(self.evaluate(stmt.condition))):
+            self.execute(stmt.thenBranch)
+        elif(stmt.elseBranch):
+            self.execute(stmt.elseBranch)
+        return None
+
+    def visitWhileStmt(self, stmt):
+        while self.isTruthy(self.evaluate(stmt.condition)):
+            self.execute(stmt.body)
+        return None
+
+
+    def executeBlock(self, stmts, env):
+        previous = self.env
+        try:
+            self.env = env
+            for statement in stmts:
+                self.execute(statement)
+        finally:
+            self.env = previous
+
+    def visitFunctionStmt(self, stmt):
+        function = LoxFunction(stmt)
+        self.env.define(stmt.name.lexeme, function)
+        return None
+
+
+
     """ Expressions """
+    def visitCallExpr(self, expr):
+        callee = self.evaluate(expr.callee)
+        if (not isinstance(callee, LoxCallable)):
+            raise LoxRuntimeError(expr.paren, "Can only call functions and classes.")
+        arguments = [self.evaluate(argument) for argument in expr.arguments]
+        function = callee
+
+        if(len(arguments) != function.arity()):
+            raise LoxRuntimeError(expr.paren, "Expected " + str(function.arity()) + " Arguments, but got " + str(len(arguments)) + ".")
+        return function.call(self, arguments)
+
+    def visitAssignExpr(self, expr):
+        value = self.evaluate(expr.value)
+        self.env.assign(expr.name, value)
+        return value
     def visitVariableExpr(self, expr): return self.env.get(expr.name)
     def visitLiteralExpr(self, expr): return expr.value
     def visitGroupingExpr(self, expr) : return self.evaluate(expr.expression)
@@ -58,10 +113,18 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         if (isinstance(left, float) and isinstance(right,float)): return
         raise LoxRuntimeError(operator, "Operands must be numbers")
 
-    def isTruthy(self, object):
-        if (object == None) : return False
-        elif (isinstance(object, bool)) : return object
+    def isTruthy(self, obj):
+        if (obj == None) : return False
+        elif (isinstance(obj, bool)) : return obj
         return True
+
+    def visitLogicalExpr(self,expr):
+        left = self.evaluate(expr.left)
+        if(expr.operator.type == TokenType.OR):
+            if(self.isTruthy(left)): return left
+        else:
+            if(not self.isTruthy(left)): return left
+        return self.evaluate(expr.right)
 
     def visitBinaryExpr(self,expr):
         left = self.evaluate(expr.left)
@@ -84,9 +147,9 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             if (isinstance(left, float) and isinstance(right, float)):
                 return left + right
             if (isinstance(left,str)):
-                return left + self.stringify(right)
+                return left + stringify(right)
             if (isinstance(right,str)):
-                return self.stringify(left) + right
+                return stringify(left) + right
             return left + right
             raise LoxRuntimeError(operator, "operands must be numbers or strings")
         elif(expr.operator.type == TokenType.GREATER) :
@@ -110,11 +173,3 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def execute(self, stmt): return stmt.accept(self)
 
     def evaluate(self, expr): return expr.accept(self)
-
-    def stringify(self, obj):
-        if (obj == None) : return "nil"
-        if (isinstance(obj,float)):
-            text = str(obj)
-            if (text.endswith(".0")) : text = text[0: len(text) - 2]
-            return text
-        return str(obj)

@@ -28,7 +28,6 @@ class Scanner:
         "if" : TokenType.IF,
         "nil" : TokenType.NIL,
         "or" : TokenType.OR,
-        "print" : TokenType.PRINT,
         "return" : TokenType.RETURN,
         "super" : TokenType.SUPER,
         "this" : TokenType.THIS,
@@ -101,10 +100,10 @@ class Scanner:
 
     def string(self):
         while (self.peek() != '"' and (not self.isAtEnd())):
-            if (self.peek() == '\n') : line += 1
+            if (self.peek() == '\n') : self.line += 1
             self.advance()
         if (self.isAtEnd()) :
-            ErrorHandler.error(line, "undetermined string.")
+            ErrorHandler.error(self.line, "undetermined string.")
             return
         self.advance()
         value = self.source[self.start+1 : self.current - 1]

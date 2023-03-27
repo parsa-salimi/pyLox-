@@ -3,18 +3,27 @@ from pathlib import Path
 
 def mainExpr():
     outputDir = sys.argv[1]
-    grammar = [     "Binary   :  left, operator, right",
+    grammar = [
+                    "Assign   :  name, value",
+                    "Binary   :  left, operator, right",
+                    "Call     :  callee, paren, arguments",
                     "Grouping : expression",
                     "Literal  : value",
+                    "Logical  : left, operator, right",
                     "Unary    :  operator, right",
                     "Variable : name" ]
     defineAst(outputDir, "Expr", grammar)
 
 def mainStmt():
     outputDir = sys.argv[1]
-    grammar = [ "Expression : expression",
-                "Print      : expression",
-                "Var        : name, initializer"]
+    grammar = [ "Block      : statements",
+                "Expression : expression",
+                "If         : condition, thenBranch, elseBranch",
+                "Function   : name, params, body",
+                "Return     : keyword, value",
+                "Var        : name, initializer",
+                "While      : condition, body"
+                ]
     defineAst(outputDir, "Stmt", grammar)
 
 def defineAst(outputDir, baseName, types):
