@@ -9,6 +9,7 @@ from LoxCallable import LoxCallable
 import NativeFunctions
 from NativeFunctions import stringify
 from LoxFunction import LoxFunction
+from Return import Return
 
 class LoxTypeError(Exception):
     def __init__(self, token, message):
@@ -36,6 +37,10 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         self.evaluate(stmt.expression)
         return None
 
+    def visitReturnStmt(self, stmt):
+        value = None
+        if stmt.value: value=self.evaluate(stmt.value)
+        raise Return(value)
 
     def visitVarStmt(self, stmt):
         value = None
@@ -72,7 +77,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             self.env = previous
 
     def visitFunctionStmt(self, stmt):
-        function = LoxFunction(stmt)
+        function = LoxFunction(stmt, self.env)
         self.env.define(stmt.name.lexeme, function)
         return None
 

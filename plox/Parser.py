@@ -60,9 +60,20 @@ class Parser:
             return self.whileStatement()
         if(self.match([TokenType.FOR])):
             return self.forStatement()
+        if(self.match([TokenType.RETURN])):
+            return self.returnStatement()
         if(self.match([TokenType.LEFT_BRACE])):
             return Stmt.Block(self.block())
         else: return self.expressionStatement()
+
+
+    def returnStatement(self):
+        keyword = self.previous()
+        value = None
+        if(not self.check(TokenType.SEMICOLON)):
+            value = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after return value ")
+        return Stmt.Return(keyword, value)
 
     def ifStatement(self):
         self.consume(TokenType.LEFT_PAREN, "Expect ( after If.")
