@@ -3,6 +3,7 @@ from Parser import Parser, ParseError
 from astPrinter import AstPrinter
 from TokenType import TokenType
 from Interpreter import Interpreter
+from Resolver import Resolver
 import ErrorHandler
 from ErrorHandler import LoxRuntimeError, ErrorHandler
 import sys
@@ -42,8 +43,10 @@ class Lox:
         tokens = scanner.scanTokens()
         parser = Parser(tokens)
         ast = parser.expression()
-        if ErrorHandler.had_error :
-            return
+        if ErrorHandler.had_error : return
+        resolver = Resolver(self.interpreter)
+        resolver.resolveExpr(ast)
+        if ErrorHandler.had_error: return
         value = self.interpreter.evaluate(ast)
         print(self.interpreter.stringify(value))
         return
@@ -53,8 +56,10 @@ class Lox:
         tokens = scanner.scanTokens()
         parser = Parser(tokens)
         statements = parser.parse()
-        if ErrorHandler.had_error :
-            return
+        if ErrorHandler.had_error : return
+        resolver = Resolver(self.interpreter)
+        resolver.resolveStmts(statements)
+        if ErrorHandler.had_error: return
         self.interpreter.interpret(statements)
 
 

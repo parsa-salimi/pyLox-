@@ -22,8 +22,13 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self):
         self.globalEnv = Environment()
         self.env = self.globalEnv
+        self.locals = {}
         for function, impl in NativeFunctions.NativeFunctionsList.items():
             self.globalEnv.define(function, impl())
+
+    def resolve(self, expr, depth):
+        self.locals[expr] = depth
+
 
     def interpret(self,listStmts):
         try:
@@ -97,9 +102,17 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     def visitAssignExpr(self, expr):
         value = self.evaluate(expr.value)
-        self.env.assign(expr.name, value)
+        distance = self.locals.get(expr, None)
+        if distance:
+            self.env.assignAt(distance, expr.name, value)
+        else:
+            self.globalEnv.assign(expr.name, value)
+
         return value
-    def visitVariableExpr(self, expr): return self.env.get(expr.name)
+
+
+
+    def visitVariableExpr(self, expr): return self.lookUpVariable(expr.name, expr)
     def visitLiteralExpr(self, expr): return expr.value
     def visitGroupingExpr(self, expr) : return self.evaluate(expr.expression)
     def visitUnaryExpr(self, expr):
@@ -113,6 +126,13 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def checkNumberOperand(self, operator, operand):
         if isinstance(operator, float) : return
         raise LoxRuntimeError(operator, "Operand must be a number")
+
+    def lookUpVariable(self, name, expr):
+        depth = self.locals.get(expr, None)
+        if depth is not None:
+            return self.env.getAt(depth, name.lexeme)
+        else: return self.globalEnv.get(name)
+
 
     def checkNumberOperands(self, operator, left, right):
         if (isinstance(left, float) and isinstance(right,float)): return
